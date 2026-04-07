@@ -2,7 +2,7 @@
 
 > Claude Code Skill · 从产品想法到可交付代码的 WeUI 全流程助手
 
-把一句"做一个 XX 功能"变成三份可直接使用的交付物：**原型 + PRD、技术文档、Vue SFC**。
+把一句"做一个 XX 功能"变成四份可直接使用的交付物：**可交互原型、PRD（含截图可导出 Word）、技术文档、Vue SFC**。
 
 ---
 
@@ -13,8 +13,8 @@
 | `做一个 WeUI 功能` | 从零开始构建一个小程序页面 |
 | `从需求到代码` | 完整走一遍五阶段流程 |
 | `用 product-weui-demo` | 显式调用此 skill |
-| `生成带 PRD 的原型` | 需要产品文档 + 原型一体化输出 |
-| `出完整交付物` | 同时输出三份文件 |
+| `生成带 PRD 的原型` | 需要产品文档 + 原型分离输出 |
+| `出完整交付物` | 同时输出四份文件 |
 
 ---
 
@@ -25,7 +25,8 @@
         ↓ 用户确认
 ② 提供设计参考 → 生成风格预览 HTML
         ↓ 用户确认
-③ 生成原型 + PRD（{页面名}.html，带截图）
+③ 生成可交互原型（{页面名}.html）
+   + 产品需求文档（{页面名}_prd.html，带截图，可导出 Word）
         ↓ 用户确认
 ④ 生成技术文档（{页面名}_tech.html，左截图 + 右组件卡）
         ↓
@@ -40,10 +41,11 @@
 
 | 文件 | 受众 | 内容 |
 |------|------|------|
-| `{页面名}.html` | 产品 / 设计 | 可交互原型 **+** 产品需求文档（每个状态的触发条件、界面呈现、用户操作、状态流转、数据来源）|
+| `{页面名}.html` | 产品 / 设计 | **可交互原型**：WeUI CSS 渲染，JS 切换多个页面状态 |
+| `{页面名}_prd.html` | 产品 / 设计 | **产品需求文档**：A4 排版，每个状态含触发条件 / 界面呈现 / 用户操作 / 状态流转 / 数据来源 + 截图，可导出 Word |
 | `{页面名}_tech.html` | 开发 | 左列：完整页面截图；右列：组件卡片（WeUI 可用 = live 预览 + Vue 代码；自定义 = 说明 + 自定义预览）|
 | `{页面名}.vue` | 开发 | 完整 Vue SFC，`<script setup lang="ts">`，直接复制进工程 |
-| `{页面名}_screenshots/` | tech.html 依赖 | Puppeteer 截图脚本生成 |
+| `{页面名}_screenshots/` | PRD + tech.html 依赖 | Puppeteer 截图脚本生成 |
 
 ### 截图脚本
 
@@ -52,18 +54,36 @@ npm install puppeteer        # 首次安装
 node scripts/screenshot.js {页面名}.html
 ```
 
+### PRD 导出 Word
+
+```bash
+pandoc {页面名}_prd.html -o {页面名}_prd.docx
+# 或在浏览器中 File → Save as → Word Document (.doc)
+```
+
 ---
 
 ## 阶段二：设计参考输入方式
 
-支持三种方式，任选其一：
+支持以下方式，任选其一：
 
 | 方式 | 说明 |
 |------|------|
 | 上传图片 | 截图或导出的设计稿图片 |
 | 设计链接 | Figma / 即时设计 / MasterGo 等可访问链接，直接抓取视觉规格 |
 
-提供链接后会自动提取主色调、圆角、卡片样式、字体层级、间距节奏、状态色，生成风格预览 HTML 供确认。
+提供参考后自动提取主色调、圆角、卡片样式、字体层级、间距节奏、状态色，生成风格预览 HTML 供确认。
+
+---
+
+## 阶段三：原型与 PRD 分离
+
+`{页面名}.html` 和 `{页面名}_prd.html` 职责完全分离：
+
+| 文件 | 定位 | 包含内容 |
+|------|------|---------|
+| `{页面名}.html` | 纯原型 | WeUI 渲染 + JS 状态切换，**不含产品说明文字** |
+| `{页面名}_prd.html` | 纯 PRD | 封面 + 目录 + 每状态详细说明 + 截图 + 修订记录，**不含交互逻辑** |
 
 ---
 
@@ -72,7 +92,7 @@ node scripts/screenshot.js {页面名}.html
 | 标签 | 卡片内容 |
 |------|---------|
 | `[WeUI 可用]` | `.comp-preview`（live WeUI HTML）+ `<pre>`（Vue 代码），不附 HTML 代码 |
-| `[WeUI 部分可用]` | `.comp-preview` + `<pre>` Vue 代码 + 一句需调整说明 |
+| `[WeUI 部分可用]` | `.comp-preview` + `<pre>` + 一句需调整说明 |
 | `[自定义]` | `.custom-note` 说明为何自定义 + `.comp-preview`（自定义预览）|
 
 ---
@@ -111,6 +131,6 @@ cp SKILL.md ~/.codebuddy/skills/product-weui-demo/SKILL.md
 
 ## 关联资源
 
-- [vue-weui-next-demo-skill](https://github.com/PENGJANE/vue-weui-next-demo-skill) — 单次生成三份文件（不含 brainstorm 和风格预览阶段）
+- [vue-weui-next-demo-skill](https://github.com/PENGJANE/vue-weui-next-demo-skill) — 单次生成四份文件（不含 brainstorm 和风格预览阶段）
 - [WeUI 官方文档](https://weui.io)
 - [vue-weui-next 组件文档](https://vue-weui-next.pages.woa.com/docs/guide/quickstart.html)

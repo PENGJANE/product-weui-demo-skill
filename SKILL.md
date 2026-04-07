@@ -1,7 +1,7 @@
 ---
 name: product-weui-demo
 description: |
-  Use when building a WeUI mini-program feature from scratch — from idea to deliverable. Covers the full pipeline: brainstorm product logic → upload reference design image → generate style-matched HTML preview → confirm → write HTML prototype + PRD with screenshots → generate tech doc (_tech.html, left screenshot + right component cards) → output Vue SFC. Trigger phrases: "做一个 WeUI 功能", "从需求到代码", "用 product-weui-demo", "生成带 PRD 的原型", "出完整交付物".
+  Use when building a WeUI mini-program feature from scratch — from idea to deliverable. Covers the full pipeline: brainstorm product logic → upload reference design image → generate style-matched HTML preview → confirm → write interactive HTML prototype + PRD HTML (Word-exportable with screenshots) → generate tech doc (_tech.html, left screenshot + right component cards) → output Vue SFC. Trigger phrases: "做一个 WeUI 功能", "从需求到代码", "用 product-weui-demo", "生成带 PRD 的原型", "出完整交付物".
 ---
 
 # product-weui-demo 全流程规范
@@ -15,9 +15,10 @@ description: |
 ```
 ① 梳理产品逻辑 (brainstorm)
         ↓ 用户确认
-② 上传设计参考图 → 生成风格预览 HTML
+② 提供设计参考 → 生成风格预览 HTML
         ↓ 用户确认
-③ 生成原型 + PRD（{页面名}.html，带截图）
+③ 生成可交互原型（{页面名}.html）
+   + 产品需求文档（{页面名}_prd.html，带截图，可导出 Word）
         ↓ 用户确认
 ④ 生成技术文档（{页面名}_tech.html，左截图 + 右组件卡）
         ↓
@@ -78,53 +79,20 @@ description: |
 
 ---
 
-## 阶段三：原型 + PRD（`{页面名}.html`）
+## 阶段三：可交互原型（`{页面名}.html`）+ 产品需求文档（`{页面名}_prd.html`）
 
-### 3.1 定位
+阶段三同时生成两份文件，职责完全分离：
 
-这份文件同时是：
-- **可交互原型**：WeUI CSS 渲染，JS 切换多个页面状态
-- **产品需求文档**：每个状态配详细产品逻辑说明 + 截图
+| 文件 | 定位 | 内容重点 |
+|------|------|---------|
+| `{页面名}.html` | **可交互原型** | WeUI CSS 渲染 + JS 状态切换，供产品 / 设计在浏览器中演示 |
+| `{页面名}_prd.html` | **产品需求文档** | A4 排版，每个状态完整产品说明 + 截图，可用 pandoc 导出 Word |
 
-### 3.2 每个页面状态的内容结构
+### 3.1 可交互原型（`{页面名}.html`）
 
-```
-## {状态编号}. {状态名称}
+**纯原型，不含产品说明文字。**
 
-### 触发条件
-[什么情况下用户会看到这个状态]
-
-### 界面呈现
-[视觉上有什么元素，各区域展示什么内容]
-
-### 用户操作
-[用户在此状态下能做什么，点击什么跳转到哪]
-
-### 状态流转
-[用户操作后下一步是什么状态]
-
-### 数据来源（如有）
-[哪些字段需要调外部 API，接口名或平台名]
-
-[截图 / live WeUI 渲染区域]
-```
-
-### 3.3 产品逻辑说明原则
-
-- **以展示状态为准**：按 HTML demo 的视觉逻辑写，不写代码变量名
-- **外部数据必须标注**：凡需调用第三方 API（WE分析评分、日活数据等）必须注明
-- **覆盖所有状态**：不能遗漏任何一个状态变体
-- **截图**：由截图脚本生成，放在 `{页面名}_screenshots/` 目录
-
-### 3.4 组件块标记（截图脚本依赖）
-
-```html
-<div data-component="组件中文名" data-vue='<MpButton type="primary">提交</MpButton>'>
-  <!-- WeUI HTML -->
-</div>
-```
-
-### 3.5 多状态切换结构
+#### 多状态切换结构
 
 ```html
 <script>
@@ -134,8 +102,109 @@ function showState(name) {
 }
 </script>
 
-<div id="state-partial" class="state-panel"><!-- 部分满足状态 --></div>
-<div id="state-all" class="state-panel" style="display:none"><!-- 全部满足状态 --></div>
+<div class="state-tabs">
+  <button onclick="showState('partial')">部分满足</button>
+  <button onclick="showState('all')">全部满足</button>
+</div>
+
+<div id="state-partial" class="state-panel"><!-- 状态一 --></div>
+<div id="state-all"     class="state-panel" style="display:none"><!-- 状态二 --></div>
+```
+
+#### 组件块标记（截图脚本依赖）
+
+```html
+<div data-component="组件中文名" data-vue='<MpButton type="primary">提交</MpButton>'>
+  <!-- WeUI HTML -->
+</div>
+```
+
+### 3.2 产品需求文档（`{页面名}_prd.html`）
+
+**独立 PRD 文件，A4 排版，print-friendly，可导出 Word。**
+
+#### 整体结构
+
+```
+封面：页面名称 / 版本 / 日期 / 作者
+目录：各状态编号 + 名称
+正文（每个状态一节）：
+  ## {编号}. {状态名称}
+  ### 触发条件
+  ### 界面呈现
+  ### 用户操作
+  ### 状态流转
+  ### 数据来源（如有）
+  [截图]
+修订记录
+```
+
+#### 截图嵌入
+
+```html
+<img src="./{页面名}_screenshots/{编号}_{状态名}.png"
+     alt="{状态名} 页面截图"
+     style="max-width:375px; border:1px solid #eee; border-radius:8px; display:block; margin:16px 0;" />
+```
+
+#### A4 排版 CSS（直接复制）
+
+```html
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #f0f0f0;
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  color: #111;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.page {
+  width: 794px;
+  min-height: 1123px;
+  margin: 32px auto;
+  background: #fff;
+  padding: 72px 80px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.1);
+}
+.cover { text-align: center; padding: 120px 0 80px; border-bottom: 2px solid #07c160; margin-bottom: 48px; }
+.cover h1 { font-size: 28px; font-weight: 700; margin: 0 0 12px; }
+.cover .meta { font-size: 13px; color: #888; line-height: 2; }
+.toc h2 { font-size: 18px; font-weight: 700; border-left: 4px solid #07c160; padding-left: 12px; margin-bottom: 16px; }
+.toc ol { padding-left: 20px; }
+.toc li { margin-bottom: 6px; font-size: 14px; }
+.section { margin-top: 48px; padding-top: 24px; border-top: 1px solid #eee; }
+.section h2 { font-size: 20px; font-weight: 700; margin: 0 0 20px; color: #07c160; }
+.section h3 { font-size: 15px; font-weight: 600; margin: 20px 0 8px; color: #333; }
+.section p  { margin: 0 0 10px; }
+.section ul { padding-left: 20px; margin: 0 0 10px; }
+.section li { margin-bottom: 4px; }
+.screenshot-wrap { margin: 20px 0; }
+.screenshot-wrap img { max-width: 375px; border: 1px solid #eee; border-radius: 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+.screenshot-wrap figcaption { font-size: 12px; color: #999; margin-top: 6px; }
+.revision table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.revision th, .revision td { border: 1px solid #eee; padding: 8px 12px; text-align: left; }
+.revision th { background: #f5f5f5; font-weight: 600; }
+@media print {
+  body { background: #fff; }
+  .page { margin: 0; box-shadow: none; padding: 36px 48px; }
+  .section { page-break-inside: avoid; }
+}
+</style>
+```
+
+#### 产品逻辑说明原则
+
+- **以展示状态为准**：按 HTML 原型的视觉逻辑写，不写代码变量名
+- **外部数据必须标注**：凡需调用第三方 API（WE分析评分、日活数据等）必须注明
+- **覆盖所有状态**：不能遗漏任何一个状态变体
+
+#### 导出 Word
+
+```bash
+pandoc {页面名}_prd.html -o {页面名}_prd.docx
+# 或在浏览器中 File → Save as → Word Document (.doc)
 ```
 
 **继续条件**：用户确认原型和 PRD 内容准确。
@@ -275,10 +344,11 @@ import { ref, reactive, computed } from 'vue'
 
 | 文件 | 受众 | 生成方式 |
 |------|------|---------|
-| `{页面名}.html` | 产品 / 设计 | Claude 直接生成 |
+| `{页面名}.html` | 产品 / 设计 | Claude 直接生成（可交互原型） |
+| `{页面名}_prd.html` | 产品 / 设计 | Claude 直接生成（PRD，含截图，可导出 Word） |
 | `{页面名}_tech.html` | 开发 | Claude 直接生成（截图占位，运行脚本后填充） |
 | `{页面名}.vue` | 开发 | Claude 直接生成 |
-| `{页面名}_screenshots/` | tech.html 依赖 | `node scripts/screenshot.js` 生成 |
+| `{页面名}_screenshots/` | PRD + tech.html 依赖 | `node scripts/screenshot.js` 生成 |
 
 ---
 
