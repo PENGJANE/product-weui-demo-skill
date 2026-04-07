@@ -18,7 +18,7 @@ description: |
 ② 提供设计参考 → 生成风格预览 HTML
         ↓ 用户确认
 ③ 生成可交互原型（{页面名}.html）
-   + 产品需求文档（{页面名}_prd.html，带截图，可导出 Word）
+   + 产品需求文档（{页面名}_prd.docx，Word 格式，带截图）
         ↓ 用户确认
 ④ 生成技术文档（{页面名}_tech.html，左截图 + 右组件卡）
         ↓
@@ -44,21 +44,26 @@ description: |
 
 ## 阶段二：设计风格参考 → 风格预览
 
-### 2.1 获取设计参考（三选一）
+### 2.1 主动询问设计参考（必须执行，不可跳过）
 
-提示语（固定用这句）：
-> "请提供设计参考——可以上传截图 / 设计稿图片，也可以直接给我组件设计链接（如 Figma、即时设计、MasterGo 等），我会按照这个风格生成 HTML 预览效果，你确认风格对了再进入正式原型。"
+进入阶段二时，**必须先向用户提出以下两个问题**，不得假设、跳过或自行决定风格：
 
-**支持的输入方式：**
+> **问题一：是否有参考的设计风格？**
+> "请问你们是否有参考的设计风格？比如某个现有页面的截图、视觉规范说明，或者希望对齐的产品风格（如微信原生 WeUI、Material Design、自定义品牌色等）。"
 
-| 方式 | 说明 |
-|------|------|
-| 上传图片 | 截图或导出的设计稿图片 |
-| 设计链接 | Figma / 即时设计 / MasterGo 等可访问的组件链接，直接抓取视觉规格 |
+> **问题二：是否有标准的 UI 设计文档？**
+> "是否有标准的 UI 设计文档可以参考？支持 Figma / 即时设计 / MasterGo 等设计工具的链接，或直接上传设计稿截图，我会按照文档中的视觉规格来还原组件样式。"
 
-若提供的是**设计链接**，直接访问该链接提取视觉规格，无需用户另行上传图片。
+**等待用户回复后**，根据回复内容选择下面的路径：
 
-### 2.2 分析设计参考，提取视觉规格
+| 用户回复 | 处理方式 |
+|---------|---------|
+| 提供了设计链接（Figma / 即时设计 / MasterGo 等） | 直接访问链接，提取视觉规格，进入 2.2 |
+| 上传了截图 / 设计稿图片 | 分析图片，提取视觉规格，进入 2.2 |
+| 说"用 WeUI 默认风格"/ 无特殊要求 | 以 WeUI 官方规范为基准，进入 2.2 |
+| 尚未准备好 / 需要先确认 | 等待，不得强行推进 |
+
+### 2.2 获取设计参考后，提取视觉规格
 
 从图片或设计链接中提取：
 
@@ -79,14 +84,14 @@ description: |
 
 ---
 
-## 阶段三：可交互原型（`{页面名}.html`）+ 产品需求文档（`{页面名}_prd.html`）
+## 阶段三：可交互原型（`{页面名}.html`）+ 产品需求文档（`{页面名}_prd.docx`）
 
 阶段三同时生成两份文件，职责完全分离：
 
 | 文件 | 定位 | 内容重点 |
 |------|------|---------|
 | `{页面名}.html` | **可交互原型** | WeUI CSS 渲染 + JS 状态切换，供产品 / 设计在浏览器中演示 |
-| `{页面名}_prd.html` | **产品需求文档** | A4 排版，每个状态完整产品说明 + 截图，可用 pandoc 导出 Word |
+| `{页面名}_prd.docx` | **产品需求文档** | Word 格式，每个状态完整产品说明 + 截图，直接交付给产品 / 设计 |
 
 ### 3.1 可交互原型（`{页面名}.html`）
 
@@ -119,11 +124,11 @@ function showState(name) {
 </div>
 ```
 
-### 3.2 产品需求文档（`{页面名}_prd.html`）
+### 3.2 产品需求文档（`{页面名}_prd.docx`）
 
-**独立 PRD 文件，A4 排版，print-friendly，可导出 Word。**
+**独立 PRD 文件，Word 格式，直接交付。生成流程：先生成中间 HTML（仅用于 pandoc 转换），再用 pandoc 输出 .docx。**
 
-#### 整体结构
+#### 中间 HTML 内容结构
 
 ```
 封面：页面名称 / 版本 / 日期 / 作者
@@ -139,7 +144,7 @@ function showState(name) {
 修订记录
 ```
 
-#### 截图嵌入
+#### 截图嵌入（中间 HTML 中）
 
 ```html
 <img src="./{页面名}_screenshots/{编号}_{状态名}.png"
@@ -147,65 +152,23 @@ function showState(name) {
      style="max-width:375px; border:1px solid #eee; border-radius:8px; display:block; margin:16px 0;" />
 ```
 
-#### A4 排版 CSS（直接复制）
+#### 生成 .docx（必须按此顺序执行）
 
-```html
-<style>
-*, *::before, *::after { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: #f0f0f0;
-  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  color: #111;
-  font-size: 14px;
-  line-height: 1.8;
-}
-.page {
-  width: 794px;
-  min-height: 1123px;
-  margin: 32px auto;
-  background: #fff;
-  padding: 72px 80px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.1);
-}
-.cover { text-align: center; padding: 120px 0 80px; border-bottom: 2px solid #07c160; margin-bottom: 48px; }
-.cover h1 { font-size: 28px; font-weight: 700; margin: 0 0 12px; }
-.cover .meta { font-size: 13px; color: #888; line-height: 2; }
-.toc h2 { font-size: 18px; font-weight: 700; border-left: 4px solid #07c160; padding-left: 12px; margin-bottom: 16px; }
-.toc ol { padding-left: 20px; }
-.toc li { margin-bottom: 6px; font-size: 14px; }
-.section { margin-top: 48px; padding-top: 24px; border-top: 1px solid #eee; }
-.section h2 { font-size: 20px; font-weight: 700; margin: 0 0 20px; color: #07c160; }
-.section h3 { font-size: 15px; font-weight: 600; margin: 20px 0 8px; color: #333; }
-.section p  { margin: 0 0 10px; }
-.section ul { padding-left: 20px; margin: 0 0 10px; }
-.section li { margin-bottom: 4px; }
-.screenshot-wrap { margin: 20px 0; }
-.screenshot-wrap img { max-width: 375px; border: 1px solid #eee; border-radius: 8px; display: block; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-.screenshot-wrap figcaption { font-size: 12px; color: #999; margin-top: 6px; }
-.revision table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.revision th, .revision td { border: 1px solid #eee; padding: 8px 12px; text-align: left; }
-.revision th { background: #f5f5f5; font-weight: 600; }
-@media print {
-  body { background: #fff; }
-  .page { margin: 0; box-shadow: none; padding: 36px 48px; }
-  .section { page-break-inside: avoid; }
-}
-</style>
+```bash
+# 第一步：生成截图（截图脚本依赖原型 HTML）
+node scripts/screenshot.js {页面名}.html
+
+# 第二步：截图就位后，再转换为 Word 文档
+pandoc {页面名}_prd.html -o {页面名}_prd.docx
 ```
+
+**顺序不可颠倒**：pandoc 必须在截图生成后执行，否则 .docx 内图片全部空缺。
 
 #### 产品逻辑说明原则
 
 - **以展示状态为准**：按 HTML 原型的视觉逻辑写，不写代码变量名
 - **外部数据必须标注**：凡需调用第三方 API（WE分析评分、日活数据等）必须注明
 - **覆盖所有状态**：不能遗漏任何一个状态变体
-
-#### 导出 Word
-
-```bash
-pandoc {页面名}_prd.html -o {页面名}_prd.docx
-# 或在浏览器中 File → Save as → Word Document (.doc)
-```
 
 **继续条件**：用户确认原型和 PRD 内容准确。
 
@@ -345,7 +308,7 @@ import { ref, reactive, computed } from 'vue'
 | 文件 | 受众 | 生成方式 |
 |------|------|---------|
 | `{页面名}.html` | 产品 / 设计 | Claude 直接生成（可交互原型） |
-| `{页面名}_prd.html` | 产品 / 设计 | Claude 直接生成（PRD，含截图，可导出 Word） |
+| `{页面名}_prd.docx` | 产品 / 设计 | ① Claude 生成中间 HTML → ② 运行截图脚本 → ③ pandoc 转 .docx |
 | `{页面名}_tech.html` | 开发 | Claude 直接生成（截图占位，运行脚本后填充） |
 | `{页面名}.vue` | 开发 | Claude 直接生成 |
 | `{页面名}_screenshots/` | PRD + tech.html 依赖 | `node scripts/screenshot.js` 生成 |
