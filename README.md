@@ -1,0 +1,116 @@
+# product-weui-demo
+
+> Claude Code Skill · 从产品想法到可交付代码的 WeUI 全流程助手
+
+把一句"做一个 XX 功能"变成三份可直接使用的交付物：**原型 + PRD、技术文档、Vue SFC**。
+
+---
+
+## 适用场景
+
+| 触发短语 | 说明 |
+|---------|------|
+| `做一个 WeUI 功能` | 从零开始构建一个小程序页面 |
+| `从需求到代码` | 完整走一遍五阶段流程 |
+| `用 product-weui-demo` | 显式调用此 skill |
+| `生成带 PRD 的原型` | 需要产品文档 + 原型一体化输出 |
+| `出完整交付物` | 同时输出三份文件 |
+
+---
+
+## 五阶段流程
+
+```
+① 梳理产品逻辑（调用 brainstorming skill）
+        ↓ 用户确认
+② 提供设计参考 → 生成风格预览 HTML
+        ↓ 用户确认
+③ 生成原型 + PRD（{页面名}.html，带截图）
+        ↓ 用户确认
+④ 生成技术文档（{页面名}_tech.html，左截图 + 右组件卡）
+        ↓
+⑤ 输出 Vue SFC（{页面名}.vue）
+```
+
+每个阶段**必须得到用户确认**后才进入下一阶段。
+
+---
+
+## 交付物说明
+
+| 文件 | 受众 | 内容 |
+|------|------|------|
+| `{页面名}.html` | 产品 / 设计 | 可交互原型 **+** 产品需求文档（每个状态的触发条件、界面呈现、用户操作、状态流转、数据来源）|
+| `{页面名}_tech.html` | 开发 | 左列：完整页面截图；右列：组件卡片（WeUI 可用 = live 预览 + Vue 代码；自定义 = 说明 + 自定义预览）|
+| `{页面名}.vue` | 开发 | 完整 Vue SFC，`<script setup lang="ts">`，直接复制进工程 |
+| `{页面名}_screenshots/` | tech.html 依赖 | Puppeteer 截图脚本生成 |
+
+### 截图脚本
+
+```bash
+npm install puppeteer        # 首次安装
+node scripts/screenshot.js {页面名}.html
+```
+
+---
+
+## 阶段二：设计参考输入方式
+
+支持三种方式，任选其一：
+
+| 方式 | 说明 |
+|------|------|
+| 上传图片 | 截图或导出的设计稿图片 |
+| 设计链接 | Figma / 即时设计 / MasterGo 等可访问链接，直接抓取视觉规格 |
+
+提供链接后会自动提取主色调、圆角、卡片样式、字体层级、间距节奏、状态色，生成风格预览 HTML 供确认。
+
+---
+
+## 技术文档组件卡片规则
+
+| 标签 | 卡片内容 |
+|------|---------|
+| `[WeUI 可用]` | `.comp-preview`（live WeUI HTML）+ `<pre>`（Vue 代码），不附 HTML 代码 |
+| `[WeUI 部分可用]` | `.comp-preview` + `<pre>` Vue 代码 + 一句需调整说明 |
+| `[自定义]` | `.custom-note` 说明为何自定义 + `.comp-preview`（自定义预览）|
+
+---
+
+## Vue SFC 规范要点
+
+工程 `main.ts` 全量引入，`.vue` 文件无需单独 import：
+
+```ts
+import WeUI from '@tencent/vue-weui-next'
+import '@tencent/vue-weui-next/dist/index.css'
+createApp(App).use(WeUI).mount('#app')
+```
+
+v-model 规范：
+
+```vue
+<MpInput v-model="name" />          <!-- ✅ -->
+<MpToast v-model:show="visible" />  <!-- ✅ -->
+<MpInput :value="name" @input="…" /> <!-- ❌ -->
+```
+
+---
+
+## 安装
+
+```bash
+# Claude Code
+cp SKILL.md ~/.claude/skills/product-weui-demo/SKILL.md
+
+# CodeBuddy
+cp SKILL.md ~/.codebuddy/skills/product-weui-demo/SKILL.md
+```
+
+---
+
+## 关联资源
+
+- [vue-weui-next-demo-skill](https://github.com/PENGJANE/vue-weui-next-demo-skill) — 单次生成三份文件（不含 brainstorm 和风格预览阶段）
+- [WeUI 官方文档](https://weui.io)
+- [vue-weui-next 组件文档](https://vue-weui-next.pages.woa.com/docs/guide/quickstart.html)
