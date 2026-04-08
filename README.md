@@ -1,20 +1,53 @@
 # product-weui-demo
 
-> Claude Code Skill · 从产品想法到可交付代码的 WeUI 全流程助手
+> 微信生态下，从一句需求到可落地交付物的全流程 AI 助手
 
-把一句"做一个 XX 功能"变成四份可直接使用的交付物：**可交互原型、PRD .docx（含截图）、技术文档、Vue SFC**。
+产品经理最头疼的三件事：**原型画不快、PRD 写不完、和研发对不齐。**
+
+这个 skill 专门解决这个问题——在微信小程序（WeUI）框架下，输入一句需求描述，自动走完从想法到交付的完整链路：
+
+```
+需求想法
+  → 可交互原型（浏览器直接看）
+  → 适合评审的 PRD（Word，含截图）
+  → 技术可行性文档（哪些组件能用、哪些要定制）
+  → （可选）Vue 组件代码
+```
+
+**不需要会画图、不需要会写代码**，只需要描述你想做什么。
 
 ---
 
-## 适用场景
+## 解决什么问题
 
-| 触发短语 | 说明 |
-|---------|------|
-| `做一个 WeUI 功能` | 从零开始构建一个小程序页面 |
-| `从需求到代码` | 完整走一遍五阶段流程 |
-| `用 product-weui-demo` | 显式调用此 skill |
-| `生成带 PRD 的原型` | 需要产品文档 + 原型分离输出 |
-| `出完整交付物` | 同时输出四份文件 |
+| 场景 | 没有这个 skill | 有这个 skill |
+|------|--------------|-------------|
+| 产品想验证一个新功能 | 手画线框图，难以表达交互逻辑 | 浏览器可点击的原型，状态切换一目了然 |
+| 需要出 PRD 给团队评审 | 手动截图、写说明、排版耗时 | 自动截图 + 生成带图的 Word 文档 |
+| 和前端同学对齐技术方案 | 口头描述，研发不确定能不能做 | 技术文档明确标注每个组件：WeUI 原生可用 / 需定制 / 不支持 |
+| 快速产出可讨论的方案 | 来回沟通，效率低 | 一套文件，产品、设计、研发各取所需 |
+
+---
+
+## 四份交付物
+
+### 🖥️ 可交互原型 `{页面名}.html`
+用 WeUI 组件还原真实小程序样式，支持多状态切换（如：未报名 / 审核中 / 已通过），在浏览器里直接演示给团队看。
+
+### 📄 产品需求文档 `{页面名}_prd.docx`
+Word 格式，包含每个页面状态的截图 + 文字说明，可直接发给研发、设计、运营。不需要再手动截图排版。
+
+### 🔧 技术可行性文档 `{页面名}_tech.html`
+专为和前端同学沟通设计：左侧是原型截图，右侧是每个 UI 组件的标注——
+
+- `[WeUI 可用]` — 直接用现成组件
+- `[WeUI 部分可用]` — 需要小改
+- `[自定义]` — 需要前端单独开发
+
+让前端在看需求的同时就能判断工作量，减少来回对焦。
+
+### 🧩 Vue 组件代码 `{页面名}.vue`（可选）
+如果团队用 vue-weui-next 技术栈，可以直接生成组件代码作为开发起点。**如果用不到可以跳过这一步。**
 
 ---
 
@@ -22,152 +55,101 @@
 
 ```
 ① 梳理产品逻辑（brainstorming → ai-work-booster → writing-plans）
-        ↓ 用户确认
-② 提供设计参考 → 生成风格预览 HTML
-        ↓ 用户确认
-③ 生成可交互原型（{页面名}.html）
-   + 产品需求文档（{页面名}_prd.docx，python-docx，带截图）
-        ↓ 用户确认
-④ 生成技术文档（{页面名}_tech.html，左截图 + 右组件卡）
+        ↓ 确认功能范围和状态列表
+② 上传设计参考 → 生成风格预览
+        ↓ 确认视觉方向
+③ 生成可交互原型 + PRD Word 文档
+        ↓ 确认内容
+④ 生成技术可行性文档
         ↓
-⑤ 输出 Vue SFC（{页面名}.vue）
+⑤ （可选）输出 Vue 组件代码
 ```
 
-每个阶段**必须得到用户确认**后才进入下一阶段。
+每一步都需要你确认后再继续，不会自动跑完。
 
 ---
 
-## 交付物说明
+## 阶段一：产品逻辑梳理
 
-| 文件 | 受众 | 生成方式 |
-|------|------|---------|
-| `{页面名}.html` | 产品 / 设计 | Claude 生成（可交互原型，含侧边栏导航 + 调试按钮区） |
-| `screenshot_new.js` | 截图依赖 | Claude 生成，`node` 执行，主流程截图（01–N.png） |
-| `screenshot_extra.js` | 截图依赖（补充页） | Claude 生成，`node` 执行，补充页面截图 |
-| `{页面名}_prd.docx` | 产品 / 设计 | ① 运行截图脚本 → ② `python3 generate_prd_*.py` 生成 |
-| `{页面名}_tech.html` | 开发 | Claude 生成（截图占位，运行脚本后填充） |
-| `{页面名}.vue` | 开发 | Claude 生成 |
-| `{页面名}_screenshots/` | PRD + tech.html 依赖 | `node screenshot_new.js` + `node screenshot_extra.js` |
-
-### 截图 + PRD 生成顺序（不可颠倒）
-
-```bash
-# 第一步：生成截图（Puppeteer，1440×900 @2x）
-npm install puppeteer        # 首次安装
-node screenshot_new.js       # 主流程截图
-node screenshot_extra.js     # 补充截图（如有额外页面）
-
-# 第二步：截图就位后生成 Word
-python3 generate_prd_*.py
-```
-
----
-
-## 阶段一：三 Skill 稳定链路
-
-Stage 1 是整个流程的质量基础，**必须按顺序调用三个 skill**：
+Stage 1 决定后续所有交付物的质量，**按顺序调用三个 skill**：
 
 ### 1-A `brainstorming`
-梳理产品逻辑：用户路径、页面状态枚举、触发条件、状态流转、外部数据依赖。
+梳理用户路径、页面有哪些状态、每个状态的触发条件、依赖哪些数据或权限。
 
 ### 1-B `ai-work-booster`
-对 brainstorm 产出做架构诊断：
-- 状态流转是否完整（有无遗漏边界状态）
-- 硬依赖（API / 权限 / 数据源）是否全部标注
-- 逻辑自洽性：条件互斥 / 覆盖全集 / 无死路
+检查逻辑是否完整：有没有漏掉的边界状态、依赖是否都标清楚了、条件之间有没有冲突。
 
-有问题回到 1-A 补全，无问题继续。
+有问题回到 1-A 补全，没问题继续。
 
 ### 1-C `writing-plans`（Planning with Files）
-把产品逻辑落成结构化实施计划文件：
-- 每个功能/状态记录为任务条目
-- 列出每个阶段的验收标准
-- 计划文件作为后续各阶段的输入依据
+把梳理好的产品逻辑写成结构化的计划文件，作为后续生成原型和 PRD 的依据。
 
-> **为什么要三个 skill？**
-> brainstorming 解决"想清楚"，ai-work-booster 解决"想完整"，writing-plans 解决"记下来"。
-> 跳过任何一步都会导致后续阶段反复返工。
+> brainstorming 解决「想清楚」，ai-work-booster 解决「想完整」，writing-plans 解决「记下来」。
 
 ---
 
-## 阶段二：设计参考输入方式
+## 阶段二：设计参考
 
-进入阶段二时，会先提出两个问题：
+进入这一步时会问两个问题：
 
-1. **是否有参考的设计风格？**（截图 / 视觉规范 / 品牌色等）
-2. **是否有标准的 UI 设计文档？**（Figma / 即时设计 / MasterGo 链接或图片）
+1. 有没有参考的设计风格？（截图 / 品牌色 / 视觉规范）
+2. 有没有 UI 设计稿？（Figma / 即时设计 / MasterGo 链接或图片）
 
 | 方式 | 说明 |
 |------|------|
-| 上传图片 | 截图或导出的设计稿图片 |
-| 设计链接 | Figma / 即时设计 / MasterGo 等，直接抓取视觉规格 |
+| 上传截图或设计稿 | 自动提取主色、圆角、间距、字体层级 |
+| 提供设计工具链接 | 直接读取视觉规格 |
 | 无特殊要求 | 以 WeUI 官方规范为基准 |
 
-提供参考后自动提取主色调、圆角、卡片样式、字体层级、间距节奏、状态色，生成风格预览 HTML 供确认。
+提取完后生成一个风格预览页，确认没问题再进入下一步。
 
 ---
 
-## 阶段三：原型与 PRD 分离
+## 阶段三：原型与 PRD
 
-`{页面名}.html` 和 `{页面名}_prd.docx` 职责完全分离：
+原型和 PRD 是两个独立文件，职责分开：
 
-| 文件 | 定位 | 包含内容 |
-|------|------|---------|
-| `{页面名}.html` | 纯原型 | WeUI 渲染 + JS 状态切换，**不含产品说明文字** |
-| `{页面名}_prd.docx` | 纯 PRD | 封面 + 目录 + 每状态详细说明 + 截图，**直接交付 .docx** |
+| 文件 | 给谁看 | 内容 |
+|------|--------|------|
+| `{页面名}.html` | 团队评审、演示用 | 可点击的交互原型，不含文字说明 |
+| `{页面名}_prd.docx` | 研发、设计、运营 | 每个状态的截图 + 说明，Word 直接发送 |
 
-### 多状态切换结构（`hideAll()` 模式）
+PRD 生成需要先跑截图脚本：
 
-```js
-function hideAll() {
-  document.getElementById('mainContent').style.display = 'none';
-  ['checkPage','formPage','successPage','botPage','tablePage'].forEach(function(id) {
-    var e = document.getElementById(id);
-    e.style.display = 'none';
-    e.classList.remove('active');
-  });
-}
+```bash
+npm install puppeteer        # 首次安装
+node screenshot_new.js       # 生成主流程截图
+node screenshot_extra.js     # 生成补充页面截图（如有）
+python3 generate_prd_*.py    # 生成 Word 文档
 ```
-
-截图脚本依赖 `#cardBtns` / `#checkBtns` 调试按钮区，需在原型中内嵌。
 
 ---
 
-## 技术文档组件卡片规则
+## 阶段四：技术可行性文档
 
-| 标签 | 卡片内容 |
-|------|---------|
-| `[WeUI 可用]` | `.comp-preview`（live WeUI HTML）+ `<pre>`（Vue 代码），不附 HTML 代码 |
-| `[WeUI 部分可用]` | `.comp-preview` + `<pre>` + 一句需调整说明 |
-| `[自定义]` | `.custom-note` 说明为何自定义 + `.comp-preview`（自定义预览）|
+`{页面名}_tech.html` 是给前端同学看的文档，格式是左右两栏：
+- 左：原型截图
+- 右：每个 UI 组件的标注（原生可用 / 需调整 / 需定制）
+
+前端拿到这份文档，不需要再反复问「这个效果能不能实现」，直接能判断开发工作量。
 
 ---
 
-## Vue SFC 规范要点
+## 交付物一览
 
-工程 `main.ts` 全量引入，`.vue` 文件无需单独 import：
-
-```ts
-import WeUI from '@tencent/vue-weui-next'
-import '@tencent/vue-weui-next/dist/index.css'
-createApp(App).use(WeUI).mount('#app')
-```
-
-v-model 规范：
-
-```vue
-<MpInput v-model="name" />           <!-- ✅ -->
-<MpToast v-model:show="visible" />   <!-- ✅ -->
-<MpInput :value="name" @input="…" /> <!-- ❌ -->
-```
+| 文件 | 用途 |
+|------|------|
+| `{页面名}.html` | 可交互原型，团队演示用 |
+| `{页面名}_prd.docx` | 产品需求文档，含截图，Word 格式 |
+| `{页面名}_tech.html` | 技术可行性文档，前端沟通用 |
+| `{页面名}.vue` | Vue 组件代码（可选） |
+| `{页面名}_screenshots/` | 截图文件夹，PRD 和技术文档依赖 |
 
 ---
 
 ## 安装
 
 ### 一键安装（推荐）
-
-运行以下命令，自动安装本 skill 及全部依赖 skill：
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/PENGJANE/product-weui-demo-skill/main/install.sh)
@@ -198,18 +180,18 @@ mkdir -p ~/.claude/skills/product-weui-demo
 curl -fsSL https://raw.githubusercontent.com/PENGJANE/product-weui-demo-skill/main/SKILL.md \
   > ~/.claude/skills/product-weui-demo/SKILL.md
 
-# 2. 依赖 skill：brainstorming（来自 superpowers）
+# 2. brainstorming（来自 superpowers）
 git clone --depth=1 --filter=blob:none --sparse https://github.com/obra/superpowers.git /tmp/superpowers
 git -C /tmp/superpowers sparse-checkout set skills/brainstorming
 cp -r /tmp/superpowers/skills/brainstorming ~/.claude/skills/brainstorming
 
-# 3. 依赖 skill：ai-work-booster
+# 3. ai-work-booster
 git clone --depth=1 https://github.com/PENGJANE/ai-work-booster.git /tmp/ai-work-booster
 mkdir -p ~/.claude/skills/ai-work-booster
 cp /tmp/ai-work-booster/SKILL.md ~/.claude/skills/ai-work-booster/
 cp -r /tmp/ai-work-booster/references ~/.claude/skills/ai-work-booster/
 
-# 4. 依赖 skill：planning-with-files
+# 4. planning-with-files
 git clone --depth=1 --filter=blob:none --sparse --branch master \
   https://github.com/OthmanAdi/planning-with-files.git /tmp/planning-with-files
 git -C /tmp/planning-with-files sparse-checkout set skills/planning-with-files
@@ -219,8 +201,6 @@ cp -r /tmp/planning-with-files/skills/planning-with-files ~/.claude/skills/plann
 ---
 
 ## 依赖 Skills
-
-此 skill 在 Stage 1 强依赖以下三个 skill，已由 `install.sh` 自动处理：
 
 | Skill | 来源 | 阶段 | 用途 |
 |-------|------|------|------|
@@ -232,6 +212,6 @@ cp -r /tmp/planning-with-files/skills/planning-with-files ~/.claude/skills/plann
 
 ## 关联资源
 
-- [vue-weui-next-demo-skill](https://github.com/PENGJANE/vue-weui-next-demo-skill) — 单次生成四份文件（不含 brainstorm 和风格预览阶段）
+- [vue-weui-next-demo-skill](https://github.com/PENGJANE/vue-weui-next-demo-skill) — 轻量版：单次直接生成四份文件，不含逻辑梳理和风格预览
 - [WeUI 官方文档](https://weui.io)
 - [vue-weui-next 组件文档](https://vue-weui-next.pages.woa.com/docs/guide/quickstart.html)
