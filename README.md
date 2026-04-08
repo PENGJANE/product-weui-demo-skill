@@ -173,25 +173,68 @@ v-model 规范：
 
 ## 安装
 
-```bash
-# Claude Code
-cp SKILL.md ~/.claude/skills/product-weui-demo/SKILL.md
+### 一键安装（推荐）
 
-# CodeBuddy
-cp SKILL.md ~/.codebuddy/skills/product-weui-demo/SKILL.md
+运行以下命令，自动安装本 skill 及全部依赖 skill：
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/PENGJANE/product-weui-demo-skill/main/install.sh)
+```
+
+或先 clone 再运行：
+
+```bash
+git clone https://github.com/PENGJANE/product-weui-demo-skill.git
+bash product-weui-demo-skill/install.sh
+```
+
+安装后共写入 4 个 skill 目录：
+
+```
+~/.claude/skills/
+  ├── brainstorming/          # 来自 obra/superpowers
+  ├── ai-work-booster/        # 来自 PENGJANE/ai-work-booster
+  ├── planning-with-files/    # 来自 OthmanAdi/planning-with-files
+  └── product-weui-demo/      # 本 skill
+```
+
+### 手动安装
+
+```bash
+# 1. 本 skill
+mkdir -p ~/.claude/skills/product-weui-demo
+curl -fsSL https://raw.githubusercontent.com/PENGJANE/product-weui-demo-skill/main/SKILL.md \
+  > ~/.claude/skills/product-weui-demo/SKILL.md
+
+# 2. 依赖 skill：brainstorming（来自 superpowers）
+git clone --depth=1 --filter=blob:none --sparse https://github.com/obra/superpowers.git /tmp/superpowers
+git -C /tmp/superpowers sparse-checkout set skills/brainstorming
+cp -r /tmp/superpowers/skills/brainstorming ~/.claude/skills/brainstorming
+
+# 3. 依赖 skill：ai-work-booster
+git clone --depth=1 https://github.com/PENGJANE/ai-work-booster.git /tmp/ai-work-booster
+mkdir -p ~/.claude/skills/ai-work-booster
+cp /tmp/ai-work-booster/SKILL.md ~/.claude/skills/ai-work-booster/
+cp -r /tmp/ai-work-booster/references ~/.claude/skills/ai-work-booster/
+
+# 4. 依赖 skill：planning-with-files
+git clone --depth=1 --filter=blob:none --sparse --branch master \
+  https://github.com/OthmanAdi/planning-with-files.git /tmp/planning-with-files
+git -C /tmp/planning-with-files sparse-checkout set skills/planning-with-files
+cp -r /tmp/planning-with-files/skills/planning-with-files ~/.claude/skills/planning-with-files
 ```
 
 ---
 
 ## 依赖 Skills
 
-此 skill 在 Stage 1 强依赖以下三个 skill，需提前安装：
+此 skill 在 Stage 1 强依赖以下三个 skill，已由 `install.sh` 自动处理：
 
-| Skill | 阶段 | 用途 |
-|-------|------|------|
-| `brainstorming` | 1-A | 梳理产品逻辑，枚举页面状态 |
-| `ai-work-booster` | 1-B | 架构诊断，检验逻辑完整性 |
-| `writing-plans` | 1-C | 落成结构化计划文件，锁定 P0/P1 |
+| Skill | 来源 | 阶段 | 用途 |
+|-------|------|------|------|
+| `brainstorming` | [obra/superpowers](https://github.com/obra/superpowers) | 1-A | 梳理产品逻辑，枚举页面状态 |
+| `ai-work-booster` | [PENGJANE/ai-work-booster](https://github.com/PENGJANE/ai-work-booster) | 1-B | 架构诊断，检验逻辑完整性 |
+| `planning-with-files` | [OthmanAdi/planning-with-files](https://github.com/OthmanAdi/planning-with-files) | 1-C | 落成结构化计划文件，锁定 P0/P1 |
 
 ---
 
