@@ -2,7 +2,7 @@
 
 > Claude Code Skill · 从产品想法到可交付代码的 WeUI 全流程助手
 
-把一句"做一个 XX 功能"变成五份可直接使用的交付物：**可交互原型、PRD Word 文档（含截图）、技术文档、Vue SFC**。
+把一句"做一个 XX 功能"变成五份可直接使用的交付物：**可交互原型、PRD .docx（含截图 + P0/P1 优先级）、技术文档、Vue SFC**。
 
 ---
 
@@ -21,12 +21,12 @@
 ## 五阶段流程
 
 ```
-① 梳理产品逻辑（调用 brainstorming skill）
+① 梳理产品逻辑 + 确定 P0/P1（brainstorming → ai-work-booster → writing-plans）
         ↓ 用户确认
 ② 提供设计参考 → 生成风格预览 HTML
         ↓ 用户确认
 ③ 生成可交互原型（{页面名}.html）
-   + 产品需求文档（{页面名}_prd.docx，Word 格式，带截图）
+   + 产品需求文档（{页面名}_prd.docx，python-docx，带截图 + P0/P1 标注）
         ↓ 用户确认
 ④ 生成技术文档（{页面名}_tech.html，左截图 + 右组件卡）
         ↓
@@ -37,25 +37,63 @@
 
 ---
 
+## 阶段一：三 Skill 稳定链路
+
+Stage 1 是整个流程的质量基础，**必须按顺序调用三个 skill**：
+
+### 1-A `brainstorming`
+梳理产品逻辑：用户路径、页面状态枚举、触发条件、状态流转、外部数据依赖。
+
+### 1-B `ai-work-booster`
+对 brainstorm 产出做架构诊断：
+- 状态流转是否完整（有无遗漏边界状态）
+- 硬依赖（API / 权限 / 数据源）是否全部标注
+- 逻辑自洽性：条件互斥 / 覆盖全集 / 无死路
+
+有问题回到 1-A 补全，无问题继续。
+
+### 1-C `writing-plans`（Planning with Files）
+把产品逻辑落成结构化实施计划文件：
+- 每个功能/状态记录为带优先级的任务条目
+- **P0/P1 必须在 Stage 1 定下来**，不能推迟到 Stage 3
+- 列出每个阶段的验收标准
+- 计划文件作为后续各阶段的输入依据
+
+**P0/P1 定义：**
+
+| 级别 | 含义 | 上线策略 |
+|------|------|---------|
+| 🔴 P0 | 用户主链路的核心功能，缺少则产品不可用 | 首期必须上线 |
+| 🟡 P1 | 增强用户体验或运营效率的辅助功能 | P0 上线后跟进 |
+
+> **为什么要三个 skill？**
+> brainstorming 解决"想清楚"，ai-work-booster 解决"想完整"，writing-plans 解决"记下来"。
+> 跳过任何一步都会导致后续阶段反复返工。
+
+---
+
 ## 交付物说明
 
 | 文件 | 受众 | 生成方式 |
 |------|------|---------|
-| `{页面名}.html` | 产品 / 设计 | Claude 直接生成（可交互原型） |
-| `{页面名}_prd.docx` | 产品 / 设计 | ① Claude 生成中间 HTML → ② 运行截图脚本 → ③ pandoc 转 .docx |
-| `{页面名}_tech.html` | 开发 | Claude 直接生成（截图占位，运行脚本后填充） |
-| `{页面名}.vue` | 开发 | Claude 直接生成 |
-| `{页面名}_screenshots/` | PRD + tech.html 依赖 | `node scripts/screenshot.js` 生成 |
+| `{页面名}.html` | 产品 / 设计 | Claude 生成（可交互原型，含侧边栏导航 + 调试按钮区） |
+| `screenshot_new.js` | 截图依赖 | Claude 生成，`node` 执行，主流程截图（P0，01–N.png） |
+| `screenshot_extra.js` | 截图依赖（P1补充） | Claude 生成，`node` 执行，P1 功能页截图 |
+| `{页面名}_prd.docx` | 产品 / 设计 | ① 运行截图脚本 → ② `python3 generate_prd_*.py` 生成 |
+| `{页面名}_tech.html` | 开发 | Claude 生成（截图占位，运行脚本后填充） |
+| `{页面名}.vue` | 开发 | Claude 生成 |
+| `{页面名}_screenshots/` | PRD + tech.html 依赖 | `node screenshot_new.js` + `node screenshot_extra.js` |
 
 ### 截图 + PRD 生成顺序（不可颠倒）
 
 ```bash
-# 第一步：生成截图
+# 第一步：生成截图（Puppeteer，1440×900 @2x）
 npm install puppeteer        # 首次安装
-node scripts/screenshot.js {页面名}.html
+node screenshot_new.js       # 主流程截图（P0 页面，01–13.png）
+node screenshot_extra.js     # 补充截图（P1 页面，如 botPage、tablePage）
 
-# 第二步：截图就位后转换为 Word
-pandoc {页面名}_prd.html -o {页面名}_prd.docx
+# 第二步：截图就位后生成 Word
+python3 generate_prd_*.py
 ```
 
 ---
@@ -67,12 +105,10 @@ pandoc {页面名}_prd.html -o {页面名}_prd.docx
 1. **是否有参考的设计风格？**（截图 / 视觉规范 / 品牌色等）
 2. **是否有标准的 UI 设计文档？**（Figma / 即时设计 / MasterGo 链接或图片）
 
-支持以下方式，任选其一：
-
 | 方式 | 说明 |
 |------|------|
 | 上传图片 | 截图或导出的设计稿图片 |
-| 设计链接 | Figma / 即时设计 / MasterGo 等可访问链接，直接抓取视觉规格 |
+| 设计链接 | Figma / 即时设计 / MasterGo 等，直接抓取视觉规格 |
 | 无特殊要求 | 以 WeUI 官方规范为基准 |
 
 提供参考后自动提取主色调、圆角、卡片样式、字体层级、间距节奏、状态色，生成风格预览 HTML 供确认。
@@ -86,7 +122,22 @@ pandoc {页面名}_prd.html -o {页面名}_prd.docx
 | 文件 | 定位 | 包含内容 |
 |------|------|---------|
 | `{页面名}.html` | 纯原型 | WeUI 渲染 + JS 状态切换，**不含产品说明文字** |
-| `{页面名}_prd.docx` | 纯 PRD | 封面 + 目录 + 每状态详细说明 + 截图 + 修订记录，**直接交付 Word** |
+| `{页面名}_prd.docx` | 纯 PRD | 封面 + 目录（含 P0/P1 emoji）+ 每状态详细说明 + 截图 + 优先级汇总表，**直接交付 .docx** |
+
+### 多状态切换结构（`hideAll()` 模式）
+
+```js
+function hideAll() {
+  document.getElementById('mainContent').style.display = 'none';
+  ['checkPage','formPage','successPage','botPage','tablePage'].forEach(function(id) {
+    var e = document.getElementById(id);
+    e.style.display = 'none';
+    e.classList.remove('active');
+  });
+}
+```
+
+截图脚本依赖 `#cardBtns` / `#checkBtns` 调试按钮区，需在原型中内嵌。
 
 ---
 
@@ -113,8 +164,8 @@ createApp(App).use(WeUI).mount('#app')
 v-model 规范：
 
 ```vue
-<MpInput v-model="name" />          <!-- ✅ -->
-<MpToast v-model:show="visible" />  <!-- ✅ -->
+<MpInput v-model="name" />           <!-- ✅ -->
+<MpToast v-model:show="visible" />   <!-- ✅ -->
 <MpInput :value="name" @input="…" /> <!-- ❌ -->
 ```
 
@@ -129,6 +180,18 @@ cp SKILL.md ~/.claude/skills/product-weui-demo/SKILL.md
 # CodeBuddy
 cp SKILL.md ~/.codebuddy/skills/product-weui-demo/SKILL.md
 ```
+
+---
+
+## 依赖 Skills
+
+此 skill 在 Stage 1 强依赖以下三个 skill，需提前安装：
+
+| Skill | 阶段 | 用途 |
+|-------|------|------|
+| `brainstorming` | 1-A | 梳理产品逻辑，枚举页面状态 |
+| `ai-work-booster` | 1-B | 架构诊断，检验逻辑完整性 |
+| `writing-plans` | 1-C | 落成结构化计划文件，锁定 P0/P1 |
 
 ---
 
