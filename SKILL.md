@@ -1,7 +1,6 @@
 ---
 name: product-weui-demo
-description: |
-  Use when building a WeUI mini-program feature from scratch — from idea to deliverable. Covers the full pipeline: brainstorm product logic → upload reference design image → generate style-matched HTML preview → confirm → write interactive HTML prototype + PRD HTML (Word-exportable with screenshots) → generate tech doc (_tech.html, left screenshot + right component cards) → output Vue SFC. Trigger phrases: "做一个 WeUI 功能", "从需求到代码", "用 product-weui-demo", "生成带 PRD 的原型", "出完整交付物".
+description: Use when building a WeUI mini-program feature end-to-end — interactive prototype, PRD .docx with screenshots, tech doc, and Vue SFC. Trigger phrases include "做一个 WeUI 功能", "从需求到代码", "生成带 PRD 的原型", "出完整交付物".
 ---
 
 # product-weui-demo 全流程规范
@@ -13,21 +12,23 @@ description: |
 ## 阶段总览
 
 ```
-① 梳理产品逻辑 (brainstorm)
+① 梳理产品逻辑 + 确定 P0/P1 优先级 (brainstorm)
         ↓ 用户确认
 ② 提供设计参考 → 生成风格预览 HTML
         ↓ 用户确认
 ③ 生成可交互原型（{页面名}.html）
-   + 产品需求文档（{页面名}_prd.docx，Word 格式，带截图）
+   + 产品需求文档（{页面名}_prd.docx，python-docx 生成，带截图 + P0/P1 优先级标注）
         ↓ 用户确认
 ④ 生成技术文档（{页面名}_tech.html，左截图 + 右组件卡）
         ↓
 ⑤ 输出 Vue SFC（{页面名}.vue）
 ```
 
+> **P0/P1 必须在 Stage 1 定下来**：优先级一旦确认，后续原型按优先级组织调试按钮、PRD 按优先级标注章节、排期会直接引用 PRD 优先级列表——无需在 Stage 3 回头补分级。
+
 ---
 
-## 阶段一：梳理产品逻辑
+## 阶段一：梳理产品逻辑 + 确定 P0/P1 优先级
 
 **调用 brainstorming skill**，通过对话逐步明确：
 
@@ -37,8 +38,17 @@ description: |
 - 外部数据依赖（如需调用 WE分析、日活 API，标注数据来源）
 - 哪些条件是硬门槛，哪些是展示性信息
 
-**产出物**：一份文字版产品逻辑确认单，供用户审阅。
-**继续条件**：用户确认逻辑无误。
+**Stage 1 必须同步确认 P0/P1 优先级**，不能推迟到 Stage 3：
+
+| 级别 | 含义 | 上线策略 |
+|------|------|---------|
+| 🔴 P0 | 用户主链路的核心功能，缺少则产品不可用 | 首期必须上线 |
+| 🟡 P1 | 增强用户体验或运营效率的辅助功能 | P0 上线后跟进，通常下个迭代完成 |
+
+确认优先级的方法：列出所有状态/功能，逐一问用户"这个是 P0 还是 P1？"，直到每一项都有明确标注。
+
+**产出物**：一份文字版产品逻辑确认单（含每项功能的 P0/P1 标注），供用户审阅。
+**继续条件**：用户确认逻辑无误，所有条目都有优先级。
 
 ---
 
@@ -91,7 +101,7 @@ description: |
 | 文件 | 定位 | 内容重点 |
 |------|------|---------|
 | `{页面名}.html` | **可交互原型** | WeUI CSS 渲染 + JS 状态切换，供产品 / 设计在浏览器中演示 |
-| `{页面名}_prd.docx` | **产品需求文档** | Word 格式，每个状态完整产品说明 + 截图，直接交付给产品 / 设计 |
+| `{页面名}_prd.docx` | **产品需求文档** | python-docx 生成，每个状态完整产品说明 + 截图 + P0/P1 优先级标注，直接交付给产品 / 设计 |
 
 ### 3.1 可交互原型（`{页面名}.html`）
 
@@ -99,21 +109,35 @@ description: |
 
 #### 多状态切换结构
 
+**推荐模式（本项目实际采用）**：单页 HTML，通过顶部 `hideAll()` + 各状态入口按钮切换，支持侧边栏导航。所有状态页用 `style="display:none"` 初始隐藏，切换时先 `hideAll()` 再显示目标页。
+
 ```html
 <script>
+function hideAll() {
+  document.getElementById('mainContent').style.display = 'none';
+  ['checkPage','formPage','successPage','botPage','tablePage'].forEach(function(id) {
+    var e = document.getElementById(id);
+    e.style.display = 'none';
+    e.classList.remove('active');
+  });
+}
 function showState(name) {
-  document.querySelectorAll('.state-panel').forEach(el => el.style.display = 'none')
-  document.getElementById('state-' + name).style.display = 'block'
+  hideAll();
+  var e = document.getElementById(name);
+  e.style.display = 'block'; e.classList.add('active');
+  window.scrollTo(0, 0);
 }
 </script>
+```
 
-<div class="state-tabs">
-  <button onclick="showState('partial')">部分满足</button>
-  <button onclick="showState('all')">全部满足</button>
+**调试按钮区（可选）**：在开发阶段于页面内嵌入一组 `#cardBtns` / `#checkBtns` 按钮，便于快速切换子状态，截图脚本依赖这些按钮 ID：
+
+```html
+<div id="cardBtns" style="display:flex;gap:8px;padding:12px;">
+  <button onclick="...">default</button>
+  <button onclick="...">ready</button>
+  <!-- 更多状态… -->
 </div>
-
-<div id="state-partial" class="state-panel"><!-- 状态一 --></div>
-<div id="state-all"     class="state-panel" style="display:none"><!-- 状态二 --></div>
 ```
 
 #### 组件块标记（截图脚本依赖）
@@ -126,43 +150,61 @@ function showState(name) {
 
 ### 3.2 产品需求文档（`{页面名}_prd.docx`）
 
-**独立 PRD 文件，Word 格式，直接交付。生成流程：先生成中间 HTML（仅用于 pandoc 转换），再用 pandoc 输出 .docx。**
+**独立 PRD 文件，使用 python-docx 直接生成 .docx，不经过 pandoc。**
 
-#### 中间 HTML 内容结构
-
-```
-封面：页面名称 / 版本 / 日期 / 作者
-目录：各状态编号 + 名称
-正文（每个状态一节）：
-  ## {编号}. {状态名称}
-  ### 触发条件
-  ### 界面呈现
-  ### 用户操作
-  ### 状态流转
-  ### 数据来源（如有）
-  [截图]
-修订记录
-```
-
-#### 截图嵌入（中间 HTML 中）
-
-```html
-<img src="./{页面名}_screenshots/{编号}_{状态名}.png"
-     alt="{状态名} 页面截图"
-     style="max-width:375px; border:1px solid #eee; border-radius:8px; display:block; margin:16px 0;" />
-```
-
-#### 生成 .docx（必须按此顺序执行）
+#### 生成流程（必须按此顺序执行）
 
 ```bash
-# 第一步：生成截图（截图脚本依赖原型 HTML）
-node scripts/screenshot.js {页面名}.html
+# 第一步：生成所有截图（Puppeteer，screenshot_new.js 或 screenshot_extra.js）
+node screenshot_new.js      # 主流程截图（13张）
+node screenshot_extra.js    # 补充截图（如新增页面）
 
-# 第二步：截图就位后，再转换为 Word 文档
-pandoc {页面名}_prd.html -o {页面名}_prd.docx
+# 第二步：截图就位后，运行 python-docx 脚本生成 .docx
+python3 generate_prd_v6.py
 ```
 
-**顺序不可颠倒**：pandoc 必须在截图生成后执行，否则 .docx 内图片全部空缺。
+**顺序不可颠倒**：python-docx 脚本读取 screenshot 目录，截图缺失时会显示红色占位文字。
+
+#### PRD .docx 文档结构
+
+```
+封面：产品名 / "产品需求文档（PRD）" / 版本 / 日期
+优先级说明框：P0 定义（红色）+ P1 定义（黄色）
+目录：每项标注 🔴 P0 / 🟡 P1
+正文各章节：
+  - 章节标题下方紧跟优先级徽标（add_priority_badge）
+  - 触发条件 / 界面呈现 / 用户操作 / 状态流转 / 数据来源
+  - 截图（add_img / add_two_imgs / add_three_imgs）
+附录：优先级汇总表 + 版本变更记录
+```
+
+#### python-docx 脚本关键工具函数
+
+| 函数 | 用途 |
+|------|------|
+| `add_priority_badge('P0'/'P1')` | 在章节标题后插入红/黄色优先级标签 |
+| `add_img(filename, width_cm, caption)` | 插入单张截图，文件不存在时显示红色警告 |
+| `add_two_imgs(f1, f2, w_cm, cap1, cap2)` | 两张截图并排（无边框表格） |
+| `add_simple_table(headers, rows, col_widths)` | 绿色表头 + 隔行浅绿底色表格 |
+| `add_banner(text, text_hex, bg_hex)` | 彩色背景提示框 |
+| `add_note(text)` | 蓝色背景注释框 |
+| `add_bullet(text, bold_prefix)` | 带可选粗体前缀的列表项 |
+
+#### 截图脚本规范（screenshot_new.js / screenshot_extra.js）
+
+- Viewport：`1440×900`，`deviceScaleFactor: 2`（输出 @2x 高清图）
+- 每张截图前先调用 `page.evaluate()` 切换至目标状态，等待 350-400ms 再截图
+- 主流程截图（01–13）命名规范：`{序号}_{页面}_{状态}.png`
+- 补充截图脚本（screenshot_extra.js）独立存放，专门处理 P1 功能页（如 botPage、tablePage）
+
+#### P0 / P1 优先级定义
+
+| 级别 | 含义 | 上线策略 |
+|------|------|---------|
+| 🔴 P0 | 用户主链路的核心功能，缺少则产品不可用 | 首期必须上线 |
+| 🟡 P1 | 增强用户体验或运营效率的辅助功能 | P0 上线后跟进，通常下个迭代完成 |
+
+**优先级标注原则**：每个章节标题下方必须有 `add_priority_badge`；目录条目右侧加 emoji 标注；附录提供优先级汇总表，便于排期对齐。
 
 #### 产品逻辑说明原则
 
@@ -307,11 +349,13 @@ import { ref, reactive, computed } from 'vue'
 
 | 文件 | 受众 | 生成方式 |
 |------|------|---------|
-| `{页面名}.html` | 产品 / 设计 | Claude 直接生成（可交互原型） |
-| `{页面名}_prd.docx` | 产品 / 设计 | ① Claude 生成中间 HTML → ② 运行截图脚本 → ③ pandoc 转 .docx |
+| `{页面名}.html` | 产品 / 设计 | Claude 直接生成（可交互原型，含侧边栏导航 + 调试按钮区） |
+| `screenshot_new.js` | 截图依赖 | Claude 生成，node 执行，主流程截图（01–N.png） |
+| `screenshot_extra.js` | 截图依赖（P1补充） | Claude 生成，node 执行，P1 功能页截图 |
+| `{页面名}_prd.docx` | 产品 / 设计 | ① 运行截图脚本 → ② `python3 generate_prd_*.py` 生成 |
 | `{页面名}_tech.html` | 开发 | Claude 直接生成（截图占位，运行脚本后填充） |
 | `{页面名}.vue` | 开发 | Claude 直接生成 |
-| `{页面名}_screenshots/` | PRD + tech.html 依赖 | `node scripts/screenshot.js` 生成 |
+| `{页面名}_screenshots/` | PRD + tech.html 依赖 | `node screenshot_new.js` + `node screenshot_extra.js` 生成 |
 
 ---
 
